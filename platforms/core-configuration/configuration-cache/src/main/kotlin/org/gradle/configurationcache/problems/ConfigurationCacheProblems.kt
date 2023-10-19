@@ -21,6 +21,7 @@ import org.gradle.api.initialization.Settings
 import org.gradle.api.internal.SettingsInternal
 import org.gradle.api.logging.Logging
 import org.gradle.api.problems.ProblemBuilderDefiningCategory
+import org.gradle.api.problems.ProblemBuilderDefiningDocumentation
 import org.gradle.api.problems.ProblemBuilderDefiningLocation
 import org.gradle.api.problems.Problems
 import org.gradle.api.problems.Severity
@@ -40,6 +41,7 @@ import org.gradle.internal.service.scopes.ServiceScope
 import org.gradle.problems.buildtree.ProblemReporter
 import org.gradle.problems.buildtree.ProblemReporter.ProblemConsumer
 import java.io.File
+import java.util.function.Consumer
 
 
 @ServiceScope(Scope.BuildTree::class)
@@ -157,12 +159,18 @@ class ConfigurationCacheProblems(
     fun Problems.onProblem(problem: PropertyProblem, severity: ProblemSeverity) {
         createProblem { builder ->
             builder.label(problem.message.toString())
-                .undocumented()
+                .documentOfProblem(problem)
                 .locationOfProblem(problem)
                 .category("CC")
                 .severity(severity.toProblemSeverity())
         }.report()
     }
+
+    private
+    fun ProblemBuilderDefiningDocumentation.documentOfProblem(problem: PropertyProblem) =
+        problem.documentationSection?.let {
+            documentedAt(Documentation.userManual("configuration_cache", it.anchor))
+        } ?: undocumented()
 
     private
     fun ProblemBuilderDefiningLocation.locationOfProblem(problem: PropertyProblem): ProblemBuilderDefiningCategory {
