@@ -20,6 +20,8 @@ import com.google.common.collect.Sets.newConcurrentHashSet
 import org.gradle.api.initialization.Settings
 import org.gradle.api.internal.SettingsInternal
 import org.gradle.api.logging.Logging
+import org.gradle.api.problems.Problems
+import org.gradle.api.problems.Severity
 import org.gradle.configurationcache.ConfigurationCacheAction
 import org.gradle.configurationcache.ConfigurationCacheAction.LOAD
 import org.gradle.configurationcache.ConfigurationCacheAction.STORE
@@ -52,7 +54,10 @@ class ConfigurationCacheProblems(
     val cacheKey: ConfigurationCacheKey,
 
     private
-    val listenerManager: ListenerManager
+    val listenerManager: ListenerManager,
+
+    private
+    val problemsService: Problems
 
 ) : ProblemsListener, ProblemReporter, AutoCloseable {
     private
@@ -141,8 +146,26 @@ class ConfigurationCacheProblems(
     private
     fun onProblem(problem: PropertyProblem, severity: ProblemSeverity) {
         if (summarizer.onProblem(problem, severity)) {
+            problemsService.onProblem(problem, severity)
             report.onProblem(problem)
         }
+    }
+
+    private
+    fun Problems.onProblem(problem: PropertyProblem, severity: ProblemSeverity) {
+        createProblem { builder ->
+            builder.label(problem.message.toString())
+                .undocumented()
+                .noLocation()
+                .category("CC")
+                .severity(severity.toProblemSeverity())
+        }.report()
+    }
+
+    private
+    fun ProblemSeverity.toProblemSeverity() = when (isFailOnProblems) {
+        true -> Severity.ERROR
+        false -> Severity.WARNING
     }
 
     override fun getId(): String {
