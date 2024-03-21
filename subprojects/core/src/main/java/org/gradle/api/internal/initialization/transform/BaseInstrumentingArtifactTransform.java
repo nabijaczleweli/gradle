@@ -40,20 +40,18 @@ import org.gradle.internal.lazy.Lazy;
 import org.gradle.util.internal.GFileUtils;
 import org.gradle.work.DisableCachingByDefault;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.File;
-import java.util.function.Consumer;
 
 import static org.gradle.api.internal.initialization.transform.BaseInstrumentingArtifactTransform.Parameters;
 import static org.gradle.api.internal.initialization.transform.utils.InstrumentationTransformUtils.createInstrumentationClasspathMarker;
 import static org.gradle.api.internal.initialization.transform.utils.InstrumentationTransformUtils.createNewFile;
-import static org.gradle.internal.classpath.TransformedClassPath.AGENT_INSTRUMENTATION_MARKER_FILE_NAME;
+import static org.gradle.internal.classpath.TransformedClassPath.FileMarker.AGENT_INSTRUMENTATION_MARKER;
+import static org.gradle.internal.classpath.TransformedClassPath.FileMarker.LEGACY_INSTRUMENTATION_MARKER;
+import static org.gradle.internal.classpath.TransformedClassPath.FileMarker.ORIGINAL_FILE_DOES_NOT_EXIST_MARKER;
 import static org.gradle.internal.classpath.TransformedClassPath.INSTRUMENTED_DIR_NAME;
 import static org.gradle.internal.classpath.TransformedClassPath.INSTRUMENTED_ENTRY_PREFIX;
-import static org.gradle.internal.classpath.TransformedClassPath.LEGACY_INSTRUMENTATION_MARKER_FILE_NAME;
 import static org.gradle.internal.classpath.TransformedClassPath.ORIGINAL_DIR_NAME;
-import static org.gradle.internal.classpath.TransformedClassPath.ORIGINAL_FILE_DOES_NOT_EXIST_MARKER;
 
 /**
  * Base artifact transform that instruments plugins with Gradle instrumentation, e.g. for configuration cache detection or property upgrades.
@@ -79,10 +77,10 @@ public abstract class BaseInstrumentingArtifactTransform implements TransformAct
     @InputArtifact
     public abstract Provider<FileSystemLocation> getInput();
 
-    protected void execute(@Nullable File artifactToInstrument, TransformOutputs outputs, Consumer<TransformOutputs> originalFileProducer) {
+    protected void doTransform(File artifactToTransform, TransformOutputs outputs) {
         createInstrumentationClasspathMarker(outputs);
-        if (artifactToInstrument == null || !artifactToInstrument.exists()) {
-            createNewFile(outputs.file(ORIGINAL_FILE_DOES_NOT_EXIST_MARKER));
+        if (!artifactToTransform.exists()) {
+            createNewFile(outputs.file(ORIGINAL_FILE_DOES_NOT_EXIST_MARKER.getFileName()));
             return;
         }
 
@@ -90,42 +88,19 @@ public abstract class BaseInstrumentingArtifactTransform implements TransformAct
             // When agent is supported, we output an instrumented jar and an original jar,
             // so we can then later reconstruct instrumented jars classpath and original jars classpath.
             // We add `instrumented-` prefix to the file since names for the same transform needs to be unique when querying results via ArtifactCollection.
-            createNewFile(outputs.file(AGENT_INSTRUMENTATION_MARKER_FILE_NAME));
-            doTransformForAgent(artifactToInstrument, outputs, originalFileProducer, originalName -> INSTRUMENTED_ENTRY_PREFIX + originalName);
+            createNewFile(outputs.file(AGENT_INSTRUMENTATION_MARKER.getFileName()));
+            doTransform(artifactToTransform, outputs, originalName -> INSTRUMENTED_ENTRY_PREFIX + originalName);
         } else {
-            createNewFile(outputs.file(LEGACY_INSTRUMENTATION_MARKER_FILE_NAME));
-            doTransform(artifactToInstrument, outputs, originalName -> originalName);
+            createNewFile(outputs.file(LEGACY_INSTRUMENTATION_MARKER.getFileName()));
+            doTransform(artifactToTransform, outputs, originalName -> originalName);
         }
     }
 
-    private void doTransformForAgent(
-        File input,
-        TransformOutputs outputs,
-        Consumer<TransformOutputs> originalFileProducer,
-        Function<String, String> instrumentedEntryNameMapper
-    ) {
-        // Instrument jars
-        doTransform(input, outputs, instrumentedEntryNameMapper);
-
-        // Create a marker file that signals we should use original entry if they are safe to load from cache loader
-        // ELSE copy an entry
-        if (input.isDirectory() || internalServices.get().getGlobalCacheLocations().isInsideGlobalCache(input.getAbsolutePath())) {
-            // Directories are ok to use outside the cache, since they are not locked by the daemon.
-            // Jars that are already in the global cache don't need to be copied, since
-            // the global caches are additive only and jars shouldn't be deleted or changed during the build.
-            originalFileProducer.accept(outputs);
-        } else {
-            // Jars that are in some mutable location (e.g. build/ directory) need to be copied to the global cache,
-            // since daemon keeps them locked when loading them to a classloader, which prevents e.g. deleting the build directory on windows
-            File copyOfOriginalFile = outputs.file(ORIGINAL_DIR_NAME + "/" + input.getName());
-            GFileUtils.copyFile(input, copyOfOriginalFile);
-        }
+    private boolean isAgentSupported() {
+        return getParameters().getAgentSupported().get();
     }
 
-    private void doTransform(
-        File input, TransformOutputs outputs,
-        Function<String, String> instrumentedEntryNameMapper
-    ) {
+    private void doTransform(File input, TransformOutputs outputs, Function<String, String> instrumentedEntryNameMapper) {
         String outputPath = getOutputPath(input, instrumentedEntryNameMapper);
         File output = input.isDirectory() ? outputs.dir(outputPath) : outputs.file(outputPath);
         InterceptorTypeRegistryAndFilter typeRegistryAndFilter = provideInterceptorTypeRegistryAndFilter();
@@ -140,12 +115,24 @@ public abstract class BaseInstrumentingArtifactTransform implements TransformAct
         return INSTRUMENTED_DIR_NAME + "/" + instrumentedEntryNameMapper.apply(input.getName());
     }
 
-    protected abstract InterceptorTypeRegistryAndFilter provideInterceptorTypeRegistryAndFilter();
-
-
-    private boolean isAgentSupported() {
-        return getParameters().getAgentSupported().get();
+    protected void doOutputOriginalArtifact(File input, TransformOutputs outputs) {
+        // Output original file if it's safe to load from cache loader ELSE copy an entry
+        if (input.isDirectory()) {
+            // Directories are ok to use outside the cache, since they are not locked by the daemon.
+            outputs.dir(input);
+        } else if (internalServices.get().getGlobalCacheLocations().isInsideGlobalCache(input.getAbsolutePath())) {
+            // Jars that are already in the global cache don't need to be copied, since
+            // the global caches are additive only and jars shouldn't be deleted or changed during the build.
+            outputs.file(input);
+        } else {
+            // Jars that are in some mutable location (e.g. build/ directory) need to be copied to the global cache,
+            // since daemon keeps them locked when loading them to a classloader, which prevents e.g. deleting the build directory on windows
+            File copyOfOriginalFile = outputs.file(ORIGINAL_DIR_NAME + "/" + input.getName());
+            GFileUtils.copyFile(input, copyOfOriginalFile);
+        }
     }
+
+    protected abstract InterceptorTypeRegistryAndFilter provideInterceptorTypeRegistryAndFilter();
 
     protected interface InterceptorTypeRegistryAndFilter {
         InstrumentationTypeRegistry getRegistry();
