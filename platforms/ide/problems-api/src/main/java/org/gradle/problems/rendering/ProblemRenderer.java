@@ -17,13 +17,13 @@
 package org.gradle.problems.rendering;
 
 import org.gradle.api.NonNullApi;
-import org.gradle.api.problems.internal.ProblemReport;
+import org.gradle.api.problems.internal.Problem;
 
 import java.util.List;
 
 @NonNullApi
 public interface ProblemRenderer {
 
-    void render(List<ProblemReport> problems);
+    void render(List<Problem> problems);
 
 }

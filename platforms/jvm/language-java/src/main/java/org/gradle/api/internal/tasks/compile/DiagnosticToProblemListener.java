@@ -26,6 +26,7 @@ import com.sun.tools.javac.util.Log;
 import org.gradle.api.problems.ProblemSpec;
 import org.gradle.api.problems.Problems;
 import org.gradle.api.problems.Severity;
+import org.gradle.api.problems.internal.GradleCoreProblemGroup;
 import org.gradle.api.problems.internal.InternalProblemReporter;
 import org.gradle.api.problems.internal.InternalProblemSpec;
 
@@ -53,16 +54,25 @@ public class DiagnosticToProblemListener implements DiagnosticListener<JavaFileO
 
     @Override
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-
+        problemReporter.reporting(spec -> buildProblem(diagnostic, context, spec));
     }
 
     @VisibleForTesting
-    void buildProblem(Diagnostic<? extends JavaFileObject> diagnostic, ProblemSpec spec) {
+    static void buildProblem(Diagnostic<? extends JavaFileObject> diagnostic, Context context, ProblemSpec spec) {
         spec.id(mapKindToId(diagnostic.getKind()), mapKindToLabel(diagnostic.getKind()), GradleCoreProblemGroup.compilation().java());
         spec.severity(mapKindToSeverity(diagnostic.getKind()));
+        addFormattedMessage(spec, diagnostic, context);
         addDetails(spec, diagnostic.getMessage(Locale.getDefault()));
         addLocations(spec, diagnostic);
+    }
 
+    private static void addDetails(ProblemSpec spec, @Nullable String diagnosticMessage) {
+        if (diagnosticMessage != null) {
+            spec.details(diagnosticMessage);
+        }
+    }
+
+    private static void addFormattedMessage(ProblemSpec spec, Diagnostic<? extends JavaFileObject> diagnostic, Context context) {
         DiagnosticFormatter<JCDiagnostic> formatter = Log.instance(context).getDiagnosticFormatter();
         Locale locale = JavacMessages.instance(context).getCurrentLocale();
         String formatted = formatter.format((JCDiagnostic) diagnostic, locale);
@@ -71,12 +81,6 @@ public class DiagnosticToProblemListener implements DiagnosticListener<JavaFileO
         ((InternalProblemSpec) spec).additionalData(
             "formatted", formatted
         );
-    }
-
-    private static void addDetails(ProblemSpec spec, @Nullable String diagnosticMessage) {
-        if (diagnosticMessage != null) {
-            spec.details(diagnosticMessage);
-        }
     }
 
     private static void addLocations(ProblemSpec spec, Diagnostic<? extends JavaFileObject> diagnostic) {

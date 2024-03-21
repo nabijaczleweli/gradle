@@ -20,7 +20,6 @@ import org.gradle.api.internal.tasks.compile.daemon.ProcessIsolatedCompilerWorke
 import org.gradle.api.internal.tasks.compile.processing.AnnotationProcessorDetector;
 import org.gradle.api.problems.internal.InternalProblems;
 import org.gradle.initialization.layout.ProjectCacheDir;
-import org.gradle.internal.Factory;
 import org.gradle.jvm.toolchain.internal.JavaCompilerFactory;
 import org.gradle.language.base.internal.compile.CompileSpec;
 import org.gradle.language.base.internal.compile.Compiler;
@@ -91,7 +90,7 @@ public class DefaultJavaCompilerFactory implements JavaCompilerFactory {
         if (ForkingJavaCompileSpec.class.isAssignableFrom(type)) {
             return (Compiler<T>) new DaemonJavaCompiler(workingDirProvider.getWorkingDirectory(), JdkJavaCompiler.class, new Object[]{getJavaHomeBasedJavaCompilerFactory()}, new ProcessIsolatedCompilerWorkerExecutor(workerDaemonFactory, actionExecutionSpecFactory, projectCacheDir), forkOptionsFactory, classPathRegistry);
         } else {
-            return (Compiler<T>) new JdkJavaCompiler(javaHomeBasedJavaCompilerFactory, problems);
+            return (Compiler<T>) new JdkJavaCompiler(getJavaHomeBasedJavaCompilerFactory(), problems);
         }
     }
 }

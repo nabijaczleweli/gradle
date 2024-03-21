@@ -42,7 +42,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Locale;
@@ -111,29 +110,7 @@ public class JdkTools {
     }
 
     private JavacTool buildJavaCompiler() {
-        Class<?> clazz;
-        try {
-            if (isJava9Compatible) {
-                clazz = isolatedToolsLoader.loadClass("javax.tools.ToolProvider");
-                try {
-                    JavacTool compiler = (JavacTool) clazz.getDeclaredMethod("getSystemJavaCompiler").invoke(null);
-                    if (compiler == null) {
-                        // We were trying to load a compiler in our process so Jvm.current() is the correct one to blame.
-                        throw new IllegalStateException("Java compiler is not available. Please check that "
-                            + Jvm.current().getJavaHome().getAbsolutePath()
-                            + " contains a valid JDK installation.");
-                    }
-                    return compiler;
-                } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-                    throw new IllegalStateException("Could not create system Java compiler", e);
-                }
-            } else {
-                clazz = isolatedToolsLoader.loadClass(DEFAULT_COMPILER_IMPL_NAME);
-            }
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Could not load class '" + DEFAULT_COMPILER_IMPL_NAME);
-        }
-        return DirectInstantiator.instantiate(clazz.asSubclass(JavacTool.class));
+        return JavacTool.create();
     }
 
     private class DefaultIncrementalAwareCompiler implements IncrementalCompilationAwareJavaCompiler {

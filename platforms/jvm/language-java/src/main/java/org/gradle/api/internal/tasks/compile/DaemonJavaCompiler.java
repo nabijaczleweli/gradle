@@ -31,6 +31,7 @@ import org.gradle.workers.internal.FlatClassLoaderStructure;
 import org.gradle.workers.internal.KeepAliveMode;
 
 import java.io.File;
+import java.util.Collections;
 
 public class DaemonJavaCompiler extends AbstractDaemonCompiler<JavaCompileSpec> {
     private final Class<? extends Compiler<JavaCompileSpec>> compilerClass;
@@ -76,11 +77,16 @@ public class DaemonJavaCompiler extends AbstractDaemonCompiler<JavaCompileSpec> 
                 "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
                 "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
             );
+        } else {
+            File toolsJar = new File(forkingSpec.getJavaHome(), "lib/tools.jar");
+            compilerClasspath = compilerClasspath.plus(
+                Collections.singletonList(toolsJar)
+            );
         }
 
-        javaForkOptions.jvmArgs(
-            "-agentlib:jdwp=transport=dt_socket,server=n,address=localhost:5006,suspend=y"
-        );
+//        javaForkOptions.jvmArgs(
+//            "-agentlib:jdwp=transport=dt_socket,server=n,address=localhost:5006,suspend=y"
+//        );
 
         FlatClassLoaderStructure classLoaderStructure = new FlatClassLoaderStructure(new VisitableURLClassLoader.Spec("compiler", compilerClasspath.getAsURLs()));
         return new DaemonForkOptionsBuilder(forkOptionsFactory)
