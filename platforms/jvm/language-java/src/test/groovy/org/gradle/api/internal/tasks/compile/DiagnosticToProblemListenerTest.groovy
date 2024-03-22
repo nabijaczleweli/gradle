@@ -16,13 +16,8 @@
 
 package org.gradle.api.internal.tasks.compile
 
-import com.sun.tools.javac.util.Context
-import org.gradle.api.Action
-import org.gradle.api.problems.ProblemSpec
-import org.gradle.api.problems.internal.InternalProblemReporter
+
 import org.gradle.api.problems.internal.InternalProblemSpec
-import org.gradle.api.problems.internal.Problem
-import org.gradle.internal.operations.OperationIdentifier
 import spock.lang.Specification
 
 import javax.tools.Diagnostic
