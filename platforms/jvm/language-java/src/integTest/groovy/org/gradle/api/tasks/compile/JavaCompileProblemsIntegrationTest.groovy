@@ -237,8 +237,8 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
 
         then:
         collectedProblems.size() == 2
-        for (def problem in collectedProblems) {
-            assertProblem(problem, "ERROR") { details ->
+        for (ReceivedProblem problem in collectedProblems) {
+            assertProblem(problem, "ERROR", true) { details ->
                 assert details == "';' expected"
             }
         }
@@ -255,6 +255,7 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
      *
      * @param problem the problem to assert
      * @param severity the expected severity of the problem
+     * @param expectPreciseLocation if it is expected that the problem has a precise location (path, line, column, length) and (path, offset, length)
      * @param extraChecks an optional closure to perform any custom checks on the problem, like checking the precise message of the problem
      *
      * @throws AssertionError if the problem does not look like how we expect it to look like
