@@ -166,9 +166,11 @@ class JavaCompilerDaemonReuseIntegrationTest extends AbstractCompilerDaemonReuse
         taskOperations.keySet() == tasks.toSet()
         tasks.eachWithIndex { taskName, index ->
             def operation = taskOperations[taskName] as BuildOperationRecord
-            assert operation["progress"].any { BuildOperationRecord.Progress progress ->
+            assert operation["progress"].find { BuildOperationRecord.Progress progress ->
+                "org.gradle.api.problems.internal.DefaultProblemProgressDetails" == progress.detailsClassName
+            }.any { BuildOperationRecord.Progress progress ->
                 def problem = progress.details["problem"]
-                def detail = problem["context"]["details"] as String
+                def detail = problem["details"] as String
                 return detail.endsWith("ClassWithWarning${index + 1}.java uses or overrides a deprecated API.")
             }
         }
