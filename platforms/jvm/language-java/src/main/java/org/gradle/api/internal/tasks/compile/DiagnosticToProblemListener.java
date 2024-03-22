@@ -30,11 +30,11 @@ import org.gradle.api.problems.internal.GradleCoreProblemGroup;
 import org.gradle.api.problems.internal.InternalProblemReporter;
 import org.gradle.api.problems.internal.InternalProblemSpec;
 
-import javax.annotation.Nullable;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileObject;
 import java.util.Locale;
+import java.util.function.Function;
 
 /**
  * A {@link DiagnosticListener} that consumes {@link Diagnostic} messages, and reports them as Gradle {@link Problems}.
@@ -46,41 +46,51 @@ public class DiagnosticToProblemListener implements DiagnosticListener<JavaFileO
 
     private final InternalProblemReporter problemReporter;
     private final Context context;
+    private final Function<Diagnostic<? extends JavaFileObject>, String> messageFormatter;
+
+    DiagnosticToProblemListener(InternalProblemReporter problemReporter, Context context, Function<Diagnostic<? extends JavaFileObject>, String> messageFormatter) {
+        this.problemReporter = problemReporter;
+        this.context = context;
+        this.messageFormatter = messageFormatter;
+    }
 
     public DiagnosticToProblemListener(InternalProblemReporter problemReporter, Context context) {
         this.problemReporter = problemReporter;
         this.context = context;
+        this.messageFormatter = diagnostic -> {
+            DiagnosticFormatter<JCDiagnostic> formatter = Log.instance(context).getDiagnosticFormatter();
+            return formatter.format((JCDiagnostic) diagnostic, JavacMessages.instance(context).getCurrentLocale());
+        };
     }
 
     @Override
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-        problemReporter.reporting(spec -> buildProblem(diagnostic, context, spec));
+        problemReporter.reporting(spec -> buildProblem(diagnostic, spec));
     }
 
     @VisibleForTesting
-    static void buildProblem(Diagnostic<? extends JavaFileObject> diagnostic, Context context, ProblemSpec spec) {
+    void buildProblem(Diagnostic<? extends JavaFileObject> diagnostic, ProblemSpec spec) {
         spec.id(mapKindToId(diagnostic.getKind()), mapKindToLabel(diagnostic.getKind()), GradleCoreProblemGroup.compilation().java());
         spec.severity(mapKindToSeverity(diagnostic.getKind()));
-        addFormattedMessage(spec, diagnostic, context);
-        addDetails(spec, diagnostic.getMessage(Locale.getDefault()));
+        addFormattedMessage(spec, diagnostic);
+        addDetails(spec, diagnostic);
         addLocations(spec, diagnostic);
     }
 
-    private static void addDetails(ProblemSpec spec, @Nullable String diagnosticMessage) {
-        if (diagnosticMessage != null) {
-            spec.details(diagnosticMessage);
-        }
-    }
-
-    private static void addFormattedMessage(ProblemSpec spec, Diagnostic<? extends JavaFileObject> diagnostic, Context context) {
-        DiagnosticFormatter<JCDiagnostic> formatter = Log.instance(context).getDiagnosticFormatter();
-        Locale locale = JavacMessages.instance(context).getCurrentLocale();
-        String formatted = formatter.format((JCDiagnostic) diagnostic, locale);
+    private void addFormattedMessage(ProblemSpec spec, Diagnostic<? extends JavaFileObject> diagnostic) {
+        String formatted = messageFormatter.apply(diagnostic);
         System.err.println(formatted);
 
         ((InternalProblemSpec) spec).additionalData(
             "formatted", formatted
         );
+    }
+
+    private static void addDetails(ProblemSpec spec, Diagnostic<? extends JavaFileObject> diagnostic) {
+        String diagnosticMessage = diagnostic.getMessage(Locale.getDefault());
+        if (diagnosticMessage != null) {
+            spec.details(diagnosticMessage);
+        }
     }
 
     private static void addLocations(ProblemSpec spec, Diagnostic<? extends JavaFileObject> diagnostic) {
@@ -153,7 +163,7 @@ public class DiagnosticToProblemListener implements DiagnosticListener<JavaFileO
             case OTHER:
                 return "java-compilation-problem";
             default:
-                return"unknown-java-compilation-problem";
+                return "unknown-java-compilation-problem";
         }
     }
 
