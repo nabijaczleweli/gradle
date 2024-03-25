@@ -109,6 +109,10 @@ public class DaemonGroovyCompiler extends AbstractDaemonCompiler<GroovyJavaJoint
                 .withChild(gradleAndUserFilter)
                 .withChild(compilerClasspath);
 
+        javaForkOptions.jvmArgs(
+            "-agentlib:jdwp=transport=dt_socket,server=n,address=localhost:5006,suspend=y"
+        );
+
         return new DaemonForkOptionsBuilder(forkOptionsFactory)
             .javaForkOptions(javaForkOptions)
             .keepAliveMode(KeepAliveMode.SESSION)
