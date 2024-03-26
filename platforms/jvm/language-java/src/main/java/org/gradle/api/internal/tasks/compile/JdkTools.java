@@ -57,6 +57,7 @@ import static java.lang.ClassLoader.getSystemClassLoader;
 /**
  * Subset replacement for {@link javax.tools.ToolProvider} that avoids the application class loader.
  */
+// classloader: compiler-loader
 public class JdkTools {
 
     // Copied from ToolProvider.defaultJavaCompilerName
@@ -97,7 +98,13 @@ public class JdkTools {
     }
 
     public ContextAwareJavaCompiler getSystemJavaCompiler() {
-        return new DefaultIncrementalAwareCompiler(buildJavaCompiler());
+        try {
+            Class<?> compilerClass = isolatedToolsLoader.loadClass(DEFAULT_COMPILER_IMPL_NAME);
+            Object compiler = compilerClass.getMethod("create").invoke(null);
+            return new DefaultIncrementalAwareCompiler(Cast.uncheckedCast(compiler));
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not instantiate class '" + DEFAULT_COMPILER_IMPL_NAME, e);
+        }
     }
 
     public Context getCompilerContext() {
@@ -107,10 +114,6 @@ public class JdkTools {
         } catch (Exception e) {
             throw new IllegalStateException("Could not load class '" + DEFAULT_CONTEXT_IMPL_NAME);
         }
-    }
-
-    private JavacTool buildJavaCompiler() {
-        return JavacTool.create();
     }
 
     private class DefaultIncrementalAwareCompiler implements IncrementalCompilationAwareJavaCompiler {
@@ -161,6 +164,8 @@ public class JdkTools {
                                                             CompilationClassBackupService classBackupService
         ) {
             ensureCompilerTask();
+            // task (JavacTaskImpl) classloader: app classloader
+            // incrementalCompileTaskClass classloader: jdk-tools
             return DirectInstantiator.instantiate(incrementalCompileTaskClass, task,
                 (Function<File, Optional<String>>) compilationSourceDirs::relativize,
                 (Consumer<String>) classBackupService::maybeBackupClassFile,
@@ -169,7 +174,6 @@ public class JdkTools {
                 (BiConsumer<String, String>) constantsAnalysisResult::addPrivateDependent
             );
         }
-
     }
 
     private void ensureCompilerTask() {

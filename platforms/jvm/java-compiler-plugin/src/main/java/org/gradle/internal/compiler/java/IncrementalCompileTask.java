@@ -64,7 +64,7 @@ public class IncrementalCompileTask implements JavaCompiler.CompilationTask {
             this.delegate = (JavacTask) delegate;
         } else {
             // Here, classloaders are:
-            //  - JavacTask: jdk-tools
+            //  - JavacTask: jdk-tools (was loaded with this loader before this PR)
             //  - delegate: compiler-loader (delegate is a JavacTaskImpl)
             throw new UnsupportedOperationException("Unexpected Java compile task: " + delegate.getClass().getName());
         }

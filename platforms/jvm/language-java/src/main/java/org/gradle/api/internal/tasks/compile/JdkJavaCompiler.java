@@ -86,6 +86,7 @@ public class JdkJavaCompiler implements Compiler<JavaCompileSpec>, Serializable 
         JavaFileManager fileManager = GradleStandardJavaFileManager.wrap(standardFileManager, DefaultClassPath.of(spec.getAnnotationProcessorPath()), hasEmptySourcepaths);
 
         // compiler classloader: compiler-loader
+        // task classloader: ~~app classloader~~ compiler-loader
         JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnosticToProblemListener, options, spec.getClassesToProcess(), compilationUnits, context);
         if (compiler instanceof IncrementalCompilationAwareJavaCompiler) {
             task = ((IncrementalCompilationAwareJavaCompiler) compiler).makeIncremental(
