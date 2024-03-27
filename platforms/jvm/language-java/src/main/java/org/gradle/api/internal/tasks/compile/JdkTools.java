@@ -19,7 +19,6 @@ package org.gradle.api.internal.tasks.compile;
 import com.sun.source.util.JavacTask;
 import com.sun.tools.javac.api.JavacTool;
 import com.sun.tools.javac.util.Context;
-import org.gradle.api.JavaVersion;
 import org.gradle.api.internal.tasks.compile.incremental.compilerapi.constants.ConstantsAnalysisResult;
 import org.gradle.internal.Cast;
 import org.gradle.internal.UncheckedException;
@@ -27,7 +26,6 @@ import org.gradle.internal.classloader.ClassLoaderFactory;
 import org.gradle.internal.classloader.DefaultClassLoaderFactory;
 import org.gradle.internal.classloader.FilteringClassLoader;
 import org.gradle.internal.classloader.VisitableURLClassLoader;
-import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.classpath.DefaultClassPath;
 import org.gradle.internal.jvm.Jvm;
 import org.gradle.internal.reflect.DirectInstantiator;
@@ -52,8 +50,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.lang.ClassLoader.getSystemClassLoader;
-
 /**
  * Subset replacement for {@link javax.tools.ToolProvider} that avoids the application class loader.
  */
@@ -65,55 +61,31 @@ public class JdkTools {
     private static final String DEFAULT_CONTEXT_IMPL_NAME = "com.sun.tools.javac.util.Context";
 
     private final ClassLoader isolatedToolsLoader;
-    private final boolean isJava9Compatible;
 
     private Class<JavaCompiler.CompilationTask> incrementalCompileTaskClass;
 
     JdkTools(Jvm jvm, List<File> compilerPlugins) {
         DefaultClassLoaderFactory defaultClassLoaderFactory = new DefaultClassLoaderFactory();
-        JavaVersion javaVersion = jvm.getJavaVersion();
-        boolean java9Compatible = javaVersion.isJava9Compatible();
         ClassLoader filteringClassLoader = getSystemFilteringClassLoader(defaultClassLoaderFactory);
-        if (!java9Compatible) {
-            File toolsJar = jvm.getToolsJar();
-            if (toolsJar == null) {
-                throw new IllegalStateException("Could not find tools.jar. Please check that "
-                    + jvm.getJavaHome().getAbsolutePath()
-                    + " contains a valid JDK installation.");
-            }
-            ClassPath defaultClassPath = DefaultClassPath.of(toolsJar).plus(compilerPlugins);
-            isolatedToolsLoader = new VisitableURLClassLoader("jdk-tools", filteringClassLoader, defaultClassPath.getAsURLs());
-            isJava9Compatible = false;
-        } else {
-            isolatedToolsLoader = VisitableURLClassLoader.fromClassPath("jdk-tools", filteringClassLoader, DefaultClassPath.of(compilerPlugins));
-            isJava9Compatible = true;
-        }
+        isolatedToolsLoader = VisitableURLClassLoader.fromClassPath("jdk-tools", filteringClassLoader, DefaultClassPath.of(compilerPlugins));
     }
 
     private ClassLoader getSystemFilteringClassLoader(ClassLoaderFactory classLoaderFactory) {
         FilteringClassLoader.Spec filterSpec = new FilteringClassLoader.Spec();
         filterSpec.allowPackage("com.sun.tools");
         filterSpec.allowPackage("com.sun.source");
-        return classLoaderFactory.createFilteringClassLoader(getSystemClassLoader(), filterSpec);
+        return classLoaderFactory.createFilteringClassLoader(
+            this.getClass().getClassLoader(),
+            filterSpec
+        );
     }
 
     public ContextAwareJavaCompiler getSystemJavaCompiler() {
-        try {
-            Class<?> compilerClass = isolatedToolsLoader.loadClass(DEFAULT_COMPILER_IMPL_NAME);
-            Object compiler = compilerClass.getMethod("create").invoke(null);
-            return new DefaultIncrementalAwareCompiler(Cast.uncheckedCast(compiler));
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not instantiate class '" + DEFAULT_COMPILER_IMPL_NAME, e);
-        }
+        return new DefaultIncrementalAwareCompiler(buildJavaCompiler());
     }
 
-    public Context getCompilerContext() {
-        try {
-            Class<?> contextClass = isolatedToolsLoader.loadClass(DEFAULT_CONTEXT_IMPL_NAME);
-            return DirectInstantiator.instantiate(contextClass.asSubclass(Context.class));
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not load class '" + DEFAULT_CONTEXT_IMPL_NAME);
-        }
+    private JavacTool buildJavaCompiler() {
+        return JavacTool.create();
     }
 
     private class DefaultIncrementalAwareCompiler implements IncrementalCompilationAwareJavaCompiler {
