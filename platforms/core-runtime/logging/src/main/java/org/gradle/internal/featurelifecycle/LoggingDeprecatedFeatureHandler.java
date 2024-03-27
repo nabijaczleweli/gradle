@@ -139,7 +139,7 @@ public class LoggingDeprecatedFeatureHandler implements FeatureHandler<Deprecate
     private void maybeLogUsage(DeprecatedFeatureUsage usage, ProblemDiagnostics diagnostics) {
         String featureMessage = usage.formattedMessage();
         Location location = diagnostics.getLocation();
-        if (!loggedUsages.add(featureMessage) && location == null && diagnostics.getUserCodeStackTrace().isEmpty()) {
+        if (!loggedUsages.add(featureMessage) && location == null && diagnostics.getMinimizedStackTrace().isEmpty()) {
             // This usage does not contain any useful diagnostics and the usage has already been logged, so skip it
             return;
         }
@@ -149,7 +149,7 @@ public class LoggingDeprecatedFeatureHandler implements FeatureHandler<Deprecate
                 .append(SystemProperties.getInstance().getLineSeparator());
         }
         message.append(featureMessage);
-        if (location != null && !loggedUsages.add(message.toString()) && diagnostics.getUserCodeStackTrace().isEmpty()) {
+        if (location != null && !loggedUsages.add(message.toString()) && diagnostics.getMinimizedStackTrace().isEmpty()) {
             // This usage has no stack trace and has already been logged with the same location, so skip it
             return;
         }
@@ -174,7 +174,7 @@ public class LoggingDeprecatedFeatureHandler implements FeatureHandler<Deprecate
         if (isTraceLoggingEnabled() && failure != null) {
             return failure.getStackTrace();
         } else {
-            return diagnostics.getUserCodeStackTrace();
+            return diagnostics.getMinimizedStackTrace();
         }
     }
 
