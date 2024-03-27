@@ -18,8 +18,11 @@ package org.gradle.api.tasks.compile
 
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
+import org.gradle.api.JavaVersion
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
+import org.gradle.integtests.fixtures.AvailableJavaHomes
 import org.gradle.integtests.fixtures.problems.ReceivedProblem
+import org.gradle.internal.jvm.Jvm
 import org.gradle.test.fixtures.file.TestFile
 /**
  * Test class verifying the integration between the {@code JavaCompile} and the {@code Problems} service.
@@ -40,8 +43,6 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
 
     def setup() {
         enableProblemsApiCheck()
-        // Explicitly enable the toolchain detection, as the test will use the toolchain to compile the code
-        executer.withToolchainDetectionEnabled()
 
         propertiesFile << """
             # Feature flag as of 8.6 to enable the Problems API
@@ -217,12 +218,13 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
         }
     }
 
-    def "problems are reported when using a JDK #jvmVersion toolchain"(int jvmVersion) {
+    def "problems are reported when using a JDK #jvm.javaVersion toolchain"(Jvm jvm) {
         given:
+        executer.withArgument("-Porg.gradle.java.installations.paths=" + jvm.javaHome.absolutePath)
         buildFile << """
             java {
                 toolchain {
-                    languageVersion = JavaLanguageVersion.of(${jvmVersion})
+                    languageVersion = JavaLanguageVersion.of(${jvm.javaVersion.majorVersion})
                 }
             }
 
@@ -233,7 +235,6 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
         possibleFileLocations.put(writeJavaCausingTwoCompilationErrors("Foo"), 2)
 
         when:
-        executer.withToolchainDetectionEnabled()
         fails("compileJava")
 
         then:
@@ -245,7 +246,11 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
         }
 
         where:
-        jvmVersion << [8, 11, 21]
+        jvm << AvailableJavaHomes.getJdks(
+            JavaVersion.VERSION_1_8,
+            JavaVersion.VERSION_11,
+            JavaVersion.VERSION_17,
+        )
     }
 
     /**
