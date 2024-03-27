@@ -27,7 +27,6 @@ import org.gradle.internal.classloader.DefaultClassLoaderFactory;
 import org.gradle.internal.classloader.FilteringClassLoader;
 import org.gradle.internal.classloader.VisitableURLClassLoader;
 import org.gradle.internal.classpath.DefaultClassPath;
-import org.gradle.internal.jvm.Jvm;
 import org.gradle.internal.reflect.DirectInstantiator;
 
 import javax.lang.model.SourceVersion;
@@ -64,7 +63,7 @@ public class JdkTools {
 
     private Class<JavaCompiler.CompilationTask> incrementalCompileTaskClass;
 
-    JdkTools(Jvm jvm, List<File> compilerPlugins) {
+    JdkTools(List<File> compilerPlugins) {
         DefaultClassLoaderFactory defaultClassLoaderFactory = new DefaultClassLoaderFactory();
         ClassLoader filteringClassLoader = getSystemFilteringClassLoader(defaultClassLoaderFactory);
         isolatedToolsLoader = VisitableURLClassLoader.fromClassPath("jdk-tools", filteringClassLoader, DefaultClassPath.of(compilerPlugins));
