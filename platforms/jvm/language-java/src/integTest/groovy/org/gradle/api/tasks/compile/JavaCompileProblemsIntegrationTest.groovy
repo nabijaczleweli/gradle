@@ -233,6 +233,7 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
         possibleFileLocations.put(writeJavaCausingTwoCompilationErrors("Foo"), 2)
 
         when:
+        executer.withToolchainDetectionEnabled()
         fails("compileJava")
 
         then:
