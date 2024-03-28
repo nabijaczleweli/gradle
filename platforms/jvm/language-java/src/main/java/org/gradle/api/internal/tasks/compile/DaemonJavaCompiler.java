@@ -20,6 +20,7 @@ import org.gradle.api.internal.tasks.compile.daemon.AbstractDaemonCompiler;
 import org.gradle.api.internal.tasks.compile.daemon.CompilerWorkerExecutor;
 import org.gradle.internal.classloader.VisitableURLClassLoader;
 import org.gradle.internal.classpath.ClassPath;
+import org.gradle.internal.jvm.JavaInfo;
 import org.gradle.internal.jvm.Jvm;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
 import org.gradle.language.base.internal.compile.Compiler;
@@ -61,12 +62,12 @@ public class DaemonJavaCompiler extends AbstractDaemonCompiler<JavaCompileSpec> 
         }
         ForkingJavaCompileSpec forkingSpec = (ForkingJavaCompileSpec) spec;
 
-        File executable = Jvm.forHome(((ForkingJavaCompileSpec) spec).getJavaHome()).getJavaExecutable();
+        JavaInfo jvm = Jvm.forHome(((ForkingJavaCompileSpec) spec).getJavaHome());
 
         MinimalJavaCompilerDaemonForkOptions forkOptions = spec.getCompileOptions().getForkOptions();
         JavaForkOptions javaForkOptions = new BaseForkOptionsConverter(forkOptionsFactory).transform(forkOptions);
         javaForkOptions.setWorkingDir(daemonWorkingDir);
-        javaForkOptions.setExecutable(executable);
+        javaForkOptions.setExecutable(jvm.getJavaExecutable());
 
         ClassPath compilerClasspath = classPathRegistry.getClassPath("JAVA-COMPILER");
 
@@ -78,15 +79,15 @@ public class DaemonJavaCompiler extends AbstractDaemonCompiler<JavaCompileSpec> 
                 "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
             );
         } else {
-            File toolsJar = new File(forkingSpec.getJavaHome(), "lib/tools.jar");
+            File toolsJar = jvm.getToolsJar();
+            if (toolsJar == null) {
+                throw new IllegalStateException("Could not find tools.jar in " + jvm.getJavaHome());
+            }
+
             compilerClasspath = compilerClasspath.plus(
                 Collections.singletonList(toolsJar)
             );
         }
-
-//        javaForkOptions.jvmArgs(
-//            "-agentlib:jdwp=transport=dt_socket,server=n,address=localhost:5006,suspend=y"
-//        );
 
         FlatClassLoaderStructure classLoaderStructure = new FlatClassLoaderStructure(new VisitableURLClassLoader.Spec("compiler", compilerClasspath.getAsURLs()));
         return new DaemonForkOptionsBuilder(forkOptionsFactory)
