@@ -466,7 +466,9 @@ class JavaCompileToolchainIntegrationTest extends AbstractIntegrationSpec implem
             }
         """
 
-        //noinspection GrDeprecatedAPIUsage
+        // We expect the compiler output one in the stderr (keeping backward compatibility) ...
+        executer.expectDeprecationWarning("$fileWithDeprecation:5: warning: $deprecationMessage")
+        // ... and the other in the stdout (new behavior, done by JavaCompilerProblemRenderer)
         executer.expectDeprecationWarning("$fileWithDeprecation:5: warning: $deprecationMessage")
 
         when:
