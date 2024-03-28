@@ -24,9 +24,9 @@ import gradlebuild.basics.FlakyTestStrategy
 import gradlebuild.basics.accessors.kotlinMainSourceSet
 import gradlebuild.basics.flakyTestStrategy
 import gradlebuild.basics.maxParallelForks
-import gradlebuild.basics.maxTestDistributionRemoteExecutors
 import gradlebuild.basics.maxTestDistributionLocalExecutors
 import gradlebuild.basics.maxTestDistributionPartitionSecond
+import gradlebuild.basics.maxTestDistributionRemoteExecutors
 import gradlebuild.basics.predictiveTestSelectionEnabled
 import gradlebuild.basics.rerunAllTests
 import gradlebuild.basics.testDistributionEnabled
@@ -203,9 +203,9 @@ fun Test.configureJvmForTest() {
         if (isUnitTest() || usesEmbeddedExecuter()) {
             jvmArgs(org.gradle.internal.jvm.JpmsConfiguration.GRADLE_DAEMON_JPMS_ARGS)
             // required by PreferenceCleaningGroovySystemLoader
-            jvmArgs(listOf("--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED"))
+            jvmArgs(listOf("--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED"))
             // Required by JdkTools and JdkJavaCompiler
-            jvmArgs(listOf("--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"))
+            jvmArgs(listOf("--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"))
         } else {
             jvmArgs(listOf("--add-opens", "java.base/java.util=ALL-UNNAMED")) // Used in tests by native platform library: WrapperProcess.getEnv
             jvmArgs(listOf("--add-opens", "java.base/java.lang=ALL-UNNAMED")) // Used in tests by ClassLoaderUtils
