@@ -52,7 +52,6 @@ import java.util.function.Function;
 /**
  * Subset replacement for {@link javax.tools.ToolProvider} that avoids the application class loader.
  */
-// classloader: compiler-loader
 public class JdkTools {
 
     // Copied from ToolProvider.defaultJavaCompilerName
