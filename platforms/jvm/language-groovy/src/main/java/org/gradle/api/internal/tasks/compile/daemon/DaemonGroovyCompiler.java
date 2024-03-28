@@ -116,7 +116,7 @@ public class DaemonGroovyCompiler extends AbstractDaemonCompiler<GroovyJavaJoint
             JavaInfo jvm = Jvm.forHome(javaExecutable.getParentFile().getParentFile());
             File toolsJar = jvm.getToolsJar();
             if (toolsJar == null) {
-                String contextualMessage = String.format("The 'tools.jar' cannot be found in the JDK '%s'.", jvm.getJavaHome())
+                String contextualMessage = String.format("The 'tools.jar' cannot be found in the JDK '%s'.", jvm.getJavaHome());
                 throw problems.throwing(problemSpec -> problemSpec
                     .id("groovy-daemon-compiler", "Missing tools.jar", GradleCoreProblemGroup.compilation().groovy())
                     .contextualLabel(contextualMessage)
