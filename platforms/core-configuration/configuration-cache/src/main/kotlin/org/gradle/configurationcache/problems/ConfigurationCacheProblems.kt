@@ -20,11 +20,10 @@ import com.google.common.collect.Sets.newConcurrentHashSet
 import org.gradle.api.initialization.Settings
 import org.gradle.api.internal.SettingsInternal
 import org.gradle.api.logging.Logging
-import org.gradle.api.problems.ProblemBuilderDefiningCategory
-import org.gradle.api.problems.ProblemBuilderDefiningDocumentation
-import org.gradle.api.problems.ProblemBuilderDefiningLocation
-import org.gradle.api.problems.Problems
+import org.gradle.api.problems.ProblemSpec
 import org.gradle.api.problems.Severity
+import org.gradle.api.problems.internal.GradleCoreProblemGroup
+import org.gradle.api.problems.internal.InternalProblems
 import org.gradle.configurationcache.ConfigurationCacheAction
 import org.gradle.configurationcache.ConfigurationCacheAction.LOAD
 import org.gradle.configurationcache.ConfigurationCacheAction.STORE
@@ -35,13 +34,13 @@ import org.gradle.configurationcache.TooManyConfigurationCacheProblemsException
 import org.gradle.configurationcache.initialization.ConfigurationCacheStartParameter
 import org.gradle.initialization.RootBuildLifecycleListener
 import org.gradle.internal.InternalBuildAdapter
+import org.gradle.internal.deprecation.Documentation
 import org.gradle.internal.event.ListenerManager
 import org.gradle.internal.service.scopes.Scope
 import org.gradle.internal.service.scopes.ServiceScope
 import org.gradle.problems.buildtree.ProblemReporter
 import org.gradle.problems.buildtree.ProblemReporter.ProblemConsumer
 import java.io.File
-import java.util.function.Consumer
 
 
 @ServiceScope(Scope.BuildTree::class)
@@ -61,7 +60,7 @@ class ConfigurationCacheProblems(
     val listenerManager: ListenerManager,
 
     private
-    val problemsService: Problems
+    val problemsService: InternalProblems
 
 ) : ProblemsListener, ProblemReporter, AutoCloseable {
     private
@@ -156,31 +155,28 @@ class ConfigurationCacheProblems(
     }
 
     private
-    fun Problems.onProblem(problem: PropertyProblem, severity: ProblemSeverity) {
-        createProblem { builder ->
-            builder.label(problem.message.toString())
-                .documentOfProblem(problem)
-                .locationOfProblem(problem)
-                .category("CC")
-                .severity(severity.toProblemSeverity())
-        }.report()
+    fun InternalProblems.onProblem(problem: PropertyProblem, severity: ProblemSeverity) {
+        internalReporter.reporting {
+            id("configuration-cache", problem.message.toString(), GradleCoreProblemGroup.validation()) // TODO (reinhold) display name might be too elaborate
+            contextualLabel(problem.message.toString())
+            documentOfProblem(problem)
+            locationOfProblem(problem)
+            severity(severity.toProblemSeverity())
+        }
     }
 
     private
-    fun ProblemBuilderDefiningDocumentation.documentOfProblem(problem: PropertyProblem) =
+    fun ProblemSpec.documentOfProblem(problem: PropertyProblem) {
         problem.documentationSection?.let {
-            documentedAt(Documentation.userManual("configuration_cache", it.anchor))
-        } ?: undocumented()
+            documentedAt(Documentation.userManual("configuration_cache", it.anchor).toString()) // TODO (reinhold) not sure?
+        }
+    }
 
     private
-    fun ProblemBuilderDefiningLocation.locationOfProblem(problem: PropertyProblem): ProblemBuilderDefiningCategory {
+    fun ProblemSpec.locationOfProblem(problem: PropertyProblem) {
         val trace = problem.trace.buildLogic()
-        return when {
-            trace?.lineNumber != null ->
-                location(trace.source.displayName, trace.lineNumber)
-
-            else ->
-                noLocation()
+        if (trace?.lineNumber != null) {
+            lineInFileLocation(trace.source.displayName, trace.lineNumber)
         }
     }
 
@@ -241,6 +237,7 @@ class ConfigurationCacheProblems(
                 val log: (String) -> Unit = if (logReportAsInfo) logger::info else logger::warn
                 log(summary.textForConsole(cacheActionText, htmlReportFile))
             }
+
             else -> validationFailures.accept(failure)
         }
     }

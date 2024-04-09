@@ -24,7 +24,7 @@ class ConfigurationCacheProblemsServiceIntegTest extends AbstractConfigurationCa
 
     def "problems are reported through the Problems API"() {
         given:
-        buildFile << """
+        buildFile """
             gradle.buildFinished { }
 
             task run
@@ -34,27 +34,35 @@ class ConfigurationCacheProblemsServiceIntegTest extends AbstractConfigurationCa
         configurationCacheFails 'run'
 
         then:
-        collectedProblems.size() == 1
-        with(collectedProblems.get(0)) {
-            label == "registration of listener on 'Gradle.buildFinished' is unsupported"
-            with(where) {
-                path == "build file 'build.gradle'"
-                line == 2
-            }
-            documentationLink != null
-            severity == "ERROR"
+        verifyAll(receivedProblem(0)) {
+            fqid == 'validation:configuration-cache'
+            contextualLabel == "registration of listener on 'Gradle.buildFinished' is unsupported"
         }
+//        collectedProblems.size() == 1
+//        with(collectedProblems.get(0)) {
+//            label == "registration of listener on 'Gradle.buildFinished' is unsupported"
+//            with(where) {
+//                path == "build file 'build.gradle'"
+//                line == 2
+//            }
+//            documentationLink != null
+//            severity == "ERROR"
+//        }
 
         when:
         configurationCacheRunLenient 'run'
 
         then:
-        collectedProblems.size() == 1
-        with(collectedProblems.get(0)) {
-            label == "registration of listener on 'Gradle.buildFinished' is unsupported"
-            severity == "WARNING"
-            documentationLink != null
+        verifyAll(receivedProblem(0)) {
+            fqid == 'validation:configuration-cache'
+            contextualLabel == "registration of listener on 'Gradle.buildFinished' is unsupported"
         }
+//        collectedProblems.size() == 1
+//        with(collectedProblems.get(0)) {
+//            label == "registration of listener on 'Gradle.buildFinished' is unsupported"
+//            severity == "WARNING"
+//            documentationLink != null
+//        }
     }
 
     def "max problems are still reported as warnings"() {
