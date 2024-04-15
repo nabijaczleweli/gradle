@@ -22,6 +22,7 @@ errorprone {
 }
 
 dependencies {
+    implementation(projects.io)
     implementation(project(":base-services"))
     implementation(project(":functional"))
     implementation(project(":enterprise-operations"))
@@ -63,6 +64,7 @@ dependencies {
     runtimeOnly(libs.slf4jApi)
 
     manifestClasspath(project(":bootstrap"))
+    manifestClasspath(projects.javaLanguageExtensions)
     manifestClasspath(project(":base-services"))
     manifestClasspath(project(":worker-services"))
     manifestClasspath(project(":core-api"))

@@ -6,18 +6,16 @@ plugins {
 description = "Local build cache implementation"
 
 dependencies {
+    api(projects.javaLanguageExtensions)
+    api(projects.time)
     api(project(":build-cache"))
-    api(libs.inject)
-
-    api(project(":base-annotations"))
-    api(project(":base-services"))
     api(project(":build-cache-spi"))
-    api(project(":core-api"))
     api(project(":files"))
     api(project(":functional"))
     api(project(":hashing"))
     api(project(":persistent-cache"))
 
+    implementation(projects.baseServices)
     implementation(libs.guava)
     implementation(libs.h2Database) {
         because("Used in BuildCacheNG")

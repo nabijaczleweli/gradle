@@ -22,17 +22,20 @@ errorprone {
 }
 
 dependencies {
-    api(project(":base-annotations"))
+    api(projects.concurrent)
+    api(projects.javaLanguageExtensions)
     api(project(":build-operations"))
     api(project(":base-services"))
     api(project(":messaging"))
     api(project(":native"))
     api(project(":files"))
-    api(project(":logging"))
 
     api(libs.jsr305)
-    api(libs.guava)
 
+    implementation(projects.io)
+    implementation(projects.time)
+
+    implementation(libs.guava)
     implementation(libs.slf4jApi)
     implementation(libs.commonsIo)
     implementation(libs.commonsLang)

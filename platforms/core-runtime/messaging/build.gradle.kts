@@ -22,7 +22,8 @@ errorprone {
 }
 
 dependencies {
-    api(project(":base-annotations"))
+    api(projects.concurrent)
+    api(projects.javaLanguageExtensions)
     api(project(":hashing"))
     api(project(":base-services"))
 
@@ -31,6 +32,7 @@ dependencies {
     api(libs.slf4jApi)
     api(libs.guava)
 
+    implementation(projects.io)
     implementation(project(":build-operations"))
 
     implementation(libs.kryo)
