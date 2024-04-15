@@ -16,7 +16,6 @@
 
 package org.gradle.tooling.internal.provider;
 
-import org.gradle.api.problems.internal.DefaultProblemProgressDetails;
 import org.gradle.api.problems.internal.Problem;
 import org.gradle.internal.buildtree.BuildActionRunner;
 import org.gradle.internal.buildtree.BuildTreeLifecycleController;
@@ -67,10 +66,10 @@ public class ProblemRenderingBuildActionRunner implements BuildActionRunner, Bui
 
     @Override
     public void progress(OperationIdentifier operationIdentifier, OperationProgressEvent progressEvent) {
-        if (progressEvent.getDetails() instanceof DefaultProblemProgressDetails) {
-            DefaultProblemProgressDetails details = (DefaultProblemProgressDetails) progressEvent.getDetails();
-            this.problems.add(details.getProblem());
-        }
+//        if (progressEvent.getDetails() instanceof DefaultProblemProgressDetails) {
+//            DefaultProblemProgressDetails details = (DefaultProblemProgressDetails) progressEvent.getDetails();
+//            this.problems.add(details.getProblem());
+//        }
     }
 
     @Override
