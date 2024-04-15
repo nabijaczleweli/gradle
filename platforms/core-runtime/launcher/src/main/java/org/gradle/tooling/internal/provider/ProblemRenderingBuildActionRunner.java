@@ -55,6 +55,7 @@ public class ProblemRenderingBuildActionRunner implements BuildActionRunner, Bui
         for (ProblemRenderer renderer : renderers) {
             renderer.render(problems);
         }
+        problems.clear();
 
         return result;
     }
