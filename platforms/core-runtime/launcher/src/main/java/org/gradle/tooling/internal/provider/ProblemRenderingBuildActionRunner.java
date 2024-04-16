@@ -36,28 +36,30 @@ import java.util.List;
 
 public class ProblemRenderingBuildActionRunner implements BuildActionRunner, BuildOperationListener {
 
+    private final BuildOperationListenerManager listenerManager;
     private final BuildActionRunner delegate;
     private final Collection<ProblemRenderer> renderers = new ArrayList<>();
     private final List<Problem> problems = new ArrayList<>();
 
     public ProblemRenderingBuildActionRunner(BuildOperationListenerManager listenerManager, BuildActionRunner delegate) {
+        this.listenerManager = listenerManager;
         this.delegate = delegate;
         this.renderers.add(new JavaCompilerProblemRenderer());
-
-//        listenerManager.addListener(this);
     }
 
     @Override
     public Result run(BuildAction action, BuildTreeLifecycleController buildController) {
-        Result result = delegate.run(action, buildController);
+        listenerManager.addListener(this);
 
-        // Render problems
-        for (ProblemRenderer renderer : renderers) {
-            renderer.render(problems);
+        try {
+            Result result = delegate.run(action, buildController);
+            for (ProblemRenderer renderer : renderers) {
+                renderer.render(problems);
+            }
+            return result;
+        } finally {
+            listenerManager.removeListener(this);
         }
-        problems.clear();
-
-        return result;
     }
 
     @Override
