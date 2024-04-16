@@ -21,6 +21,13 @@ import org.gradle.api.problems.internal.Problem;
 
 import java.util.List;
 
+/**
+ * A Java 6-compatible function interface for rendering problems.
+ * <p>
+ * It's the responsibility of the renderer to decide if and how to render the problems.
+ *
+ * @since 8.9
+ */
 @NonNullApi
 public interface ProblemRenderer {
 

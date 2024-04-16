@@ -25,6 +25,11 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Predicate;
 
+/**
+ * A {@link ProblemRenderer} that specializes in rendering Java compiler problems.
+ *
+ * @since 8.9
+ */
 public class JavaCompilerProblemRenderer implements ProblemRenderer {
 
     @Override
@@ -41,7 +46,10 @@ public class JavaCompilerProblemRenderer implements ProblemRenderer {
     }
 
     private static boolean isJavaCompilerProblem(Problem problem) {
-        return hasGroup(problem.getDefinition().getId().getGroup(), problemGroup -> GradleCoreProblemGroup.compilation().java().equals(problemGroup));
+        return hasGroup(
+            problem.getDefinition().getId().getGroup(),
+            problemGroup -> GradleCoreProblemGroup.compilation().java().equals(problemGroup)
+        );
     }
 
     private static boolean hasGroup(@Nullable ProblemGroup problemGroup, Predicate<ProblemGroup> selector) {
