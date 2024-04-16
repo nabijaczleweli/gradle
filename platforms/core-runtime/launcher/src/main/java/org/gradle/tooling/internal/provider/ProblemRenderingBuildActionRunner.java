@@ -35,6 +35,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * A {@link BuildActionRunner} that wraps a build action execution, and after the build action has completed, renders any problems received.
+ */
 public class ProblemRenderingBuildActionRunner implements BuildActionRunner, BuildOperationListener {
 
     private final BuildOperationListenerManager listenerManager;
