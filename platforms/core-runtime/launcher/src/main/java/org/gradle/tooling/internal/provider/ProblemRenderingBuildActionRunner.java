@@ -44,7 +44,7 @@ public class ProblemRenderingBuildActionRunner implements BuildActionRunner, Bui
         this.delegate = delegate;
         this.renderers.add(new JavaCompilerProblemRenderer());
 
-        listenerManager.addListener(this);
+//        listenerManager.addListener(this);
     }
 
     @Override
