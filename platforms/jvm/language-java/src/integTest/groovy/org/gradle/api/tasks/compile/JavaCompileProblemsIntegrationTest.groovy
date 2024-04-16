@@ -245,7 +245,6 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
         when:
         fails("compileJava")
 
-
         then:
         // 2 warnings + 1 special error
         // The compiler will report a single error, implying that the warnings were treated as errors
@@ -254,7 +253,7 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
             fqid == 'compilation:java:java-compilation-error'
             details == 'warnings found and -Werror specified'
             solutions.empty
-            additionalData.isEmpty()
+            additionalData.keySet() == ['formatted'].toSet()
         }
         // The two expected warnings are still reported as warnings
         verifyAll(receivedProblem(1)) {
@@ -262,14 +261,14 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
             fqid == 'compilation:java:java-compilation-warning'
             details == 'redundant cast to java.lang.String'
             solutions.empty
-            additionalData.isEmpty()
+            additionalData.keySet() == ['formatted'].toSet()
         }
         verifyAll(receivedProblem(2)) {
             assertProblem(it, "WARNING", true)
             fqid == 'compilation:java:java-compilation-warning'
             details == 'redundant cast to java.lang.String'
             solutions.empty
-            additionalData.isEmpty()
+            additionalData.keySet() == ['formatted'].toSet()
         }
     }
 
