@@ -58,7 +58,7 @@ public class DaemonGroovyCompiler extends AbstractDaemonCompiler<GroovyJavaJoint
     private final JavaForkOptionsFactory forkOptionsFactory;
     private final File daemonWorkingDir;
     private final JvmVersionDetector jvmVersionDetector;
-    private final InternalProblemReporter problems;
+    private final InternalProblemReporter problemReporter;
 
     public DaemonGroovyCompiler(
         File daemonWorkingDir,
@@ -68,7 +68,7 @@ public class DaemonGroovyCompiler extends AbstractDaemonCompiler<GroovyJavaJoint
         ClassLoaderRegistry classLoaderRegistry,
         JavaForkOptionsFactory forkOptionsFactory,
         JvmVersionDetector jvmVersionDetector,
-        InternalProblemReporter problems
+        InternalProblemReporter problemReporter
     ) {
         super(compilerWorkerExecutor);
         this.compilerClass = compilerClass;
@@ -78,7 +78,7 @@ public class DaemonGroovyCompiler extends AbstractDaemonCompiler<GroovyJavaJoint
         this.daemonWorkingDir = daemonWorkingDir;
         this.jvmVersionDetector = jvmVersionDetector;
 
-        this.problems = problems;
+        this.problemReporter = problemReporter;
     }
 
     @Override
@@ -117,7 +117,7 @@ public class DaemonGroovyCompiler extends AbstractDaemonCompiler<GroovyJavaJoint
             File toolsJar = jvm.getToolsJar();
             if (toolsJar == null) {
                 String contextualMessage = String.format("The 'tools.jar' cannot be found in the JDK '%s'.", jvm.getJavaHome());
-                throw problems.throwing(problemSpec -> problemSpec
+                throw problemReporter.throwing(problemSpec -> problemSpec
                     .id("groovy-daemon-compiler", "Missing tools.jar", GradleCoreProblemGroup.compilation().groovy())
                     .contextualLabel(contextualMessage)
                     .solution("Check if the installation is not a JRE but a JDK.")
