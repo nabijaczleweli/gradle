@@ -16,6 +16,7 @@
 
 package org.gradle.tooling.internal.provider;
 
+import org.gradle.api.problems.internal.DefaultProblemProgressDetails;
 import org.gradle.api.problems.internal.Problem;
 import org.gradle.internal.buildtree.BuildActionRunner;
 import org.gradle.internal.buildtree.BuildTreeLifecycleController;
@@ -50,7 +51,6 @@ public class ProblemRenderingBuildActionRunner implements BuildActionRunner, Bui
     @Override
     public Result run(BuildAction action, BuildTreeLifecycleController buildController) {
         listenerManager.addListener(this);
-
         try {
             Result result = delegate.run(action, buildController);
             for (ProblemRenderer renderer : renderers) {
@@ -59,6 +59,7 @@ public class ProblemRenderingBuildActionRunner implements BuildActionRunner, Bui
             return result;
         } finally {
             listenerManager.removeListener(this);
+            problems.clear();
         }
     }
 
@@ -69,10 +70,10 @@ public class ProblemRenderingBuildActionRunner implements BuildActionRunner, Bui
 
     @Override
     public void progress(OperationIdentifier operationIdentifier, OperationProgressEvent progressEvent) {
-//        if (progressEvent.getDetails() instanceof DefaultProblemProgressDetails) {
-//            DefaultProblemProgressDetails details = (DefaultProblemProgressDetails) progressEvent.getDetails();
-//            this.problems.add(details.getProblem());
-//        }
+        if (progressEvent.getDetails() instanceof DefaultProblemProgressDetails) {
+            DefaultProblemProgressDetails details = (DefaultProblemProgressDetails) progressEvent.getDetails();
+            this.problems.add(details.getProblem());
+        }
     }
 
     @Override
