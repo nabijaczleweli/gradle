@@ -41,8 +41,8 @@ public class JavaCompilerProblemRenderer implements ProblemRenderer {
     }
 
     private static void printFormattedMessageToErrorStream(Problem problem) {
-        String formatted = (String) problem.getAdditionalData().get("formatted");
-        System.err.println(formatted);
+//        String formatted = (String) problem.getAdditionalData().get("formatted");
+//        System.err.println(formatted);
     }
 
     private static boolean isJavaCompilerProblem(Problem problem) {
