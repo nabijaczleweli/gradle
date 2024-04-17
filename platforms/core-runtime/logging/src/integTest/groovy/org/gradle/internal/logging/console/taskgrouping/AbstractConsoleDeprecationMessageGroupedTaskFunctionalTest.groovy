@@ -18,8 +18,6 @@ package org.gradle.internal.logging.console.taskgrouping
 
 import org.gradle.integtests.fixtures.console.AbstractConsoleGroupedTaskFunctionalTest
 
-import static org.gradle.util.internal.TextUtil.normaliseFileSeparators
-
 abstract class AbstractConsoleDeprecationMessageGroupedTaskFunctionalTest extends AbstractConsoleGroupedTaskFunctionalTest {
 
     private static final String JAVA_SRC_DIR_PATH = 'src/main/java'
