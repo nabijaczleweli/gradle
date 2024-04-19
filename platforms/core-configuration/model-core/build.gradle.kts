@@ -15,7 +15,6 @@ errorprone {
         "MutablePublicArray", // 1 occurrences
         "OperatorPrecedence", // 5 occurrences
         "ReferenceEquality", // 3 occurrences
-        "StringCaseLocaleUsage", // 13 occurrences
         "UndefinedEquals", // 2 occurrences
         "UnnecessaryLambda", // 1 occurrences
         "UnnecessaryParentheses", // 1 occurrences
