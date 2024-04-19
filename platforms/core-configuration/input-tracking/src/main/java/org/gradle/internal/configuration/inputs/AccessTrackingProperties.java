@@ -115,25 +115,25 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public int size() {
+    public synchronized int size() {
         reportAggregatingAccess();
         return delegate.size();
     }
 
     @Override
-    public boolean isEmpty() {
+    public synchronized boolean isEmpty() {
         reportAggregatingAccess();
         return delegate.isEmpty();
     }
 
     @Override
-    public Enumeration<Object> keys() {
+    public synchronized Enumeration<Object> keys() {
         reportAggregatingAccess();
         return delegate.keys();
     }
 
     @Override
-    public Enumeration<Object> elements() {
+    public synchronized Enumeration<Object> elements() {
         reportAggregatingAccess();
         return delegate.elements();
     }
@@ -162,13 +162,13 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public void forEach(BiConsumer<? super Object, ? super Object> action) {
+    public synchronized void forEach(BiConsumer<? super Object, ? super Object> action) {
         reportAggregatingAccess();
         delegate.forEach(action);
     }
 
     @Override
-    public void replaceAll(BiFunction<? super Object, ? super Object, ?> function) {
+    public synchronized void replaceAll(BiFunction<? super Object, ? super Object, ?> function) {
         reportAggregatingAccess();
         synchronized (delegate) {
             delegate.replaceAll((k, v) -> {
@@ -185,7 +185,7 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public Object putIfAbsent(Object key, Object value) {
+    public synchronized Object putIfAbsent(Object key, Object value) {
         Object oldValue;
         synchronized (delegate) {
             oldValue = delegate.putIfAbsent(key, value);
@@ -200,7 +200,7 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public boolean remove(Object key, Object value) {
+    public synchronized boolean remove(Object key, Object value) {
         Object oldValue;
         boolean hadValue;
         synchronized (delegate) {
@@ -219,7 +219,7 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public boolean replace(Object key, Object expectedOldValue, Object newValue) {
+    public synchronized boolean replace(Object key, Object expectedOldValue, Object newValue) {
         Object oldValue;
         boolean changed;
         synchronized (delegate) {
@@ -239,7 +239,7 @@ public class AccessTrackingProperties extends Properties {
 
     @Override
     @Nullable
-    public Object replace(Object key, Object value) {
+    public synchronized Object replace(Object key, Object value) {
         Object oldValue;
         synchronized (delegate) {
             oldValue = delegate.replace(key, value);
@@ -254,7 +254,7 @@ public class AccessTrackingProperties extends Properties {
 
     @Override
     @Nullable
-    public Object computeIfAbsent(Object key, Function<? super Object, ?> mappingFunction) {
+    public synchronized Object computeIfAbsent(Object key, Function<? super Object, ?> mappingFunction) {
         Object oldValue;
         Object computedValue = null;
         synchronized (delegate) {
@@ -273,7 +273,7 @@ public class AccessTrackingProperties extends Properties {
 
     @Override
     @Nullable
-    public Object computeIfPresent(Object key, BiFunction<? super Object, ? super Object, ?> remappingFunction) {
+    public synchronized Object computeIfPresent(Object key, BiFunction<? super Object, ? super Object, ?> remappingFunction) {
         Object oldValue;
         Object computedValue = null;
         synchronized (delegate) {
@@ -296,7 +296,7 @@ public class AccessTrackingProperties extends Properties {
 
     @Override
     @Nullable
-    public Object compute(Object key, BiFunction<? super Object, ? super Object, ?> remappingFunction) {
+    public synchronized Object compute(Object key, BiFunction<? super Object, ? super Object, ?> remappingFunction) {
         Object oldValue;
         Object newValue;
         synchronized (delegate) {
@@ -312,10 +312,9 @@ public class AccessTrackingProperties extends Properties {
         return newValue;
     }
 
-
     @Override
     @Nullable
-    public Object merge(Object key, Object value, BiFunction<? super Object, ? super Object, ?> remappingFunction) {
+    public synchronized Object merge(Object key, Object value, BiFunction<? super Object, ? super Object, ?> remappingFunction) {
         Object oldValue;
         Object newValue;
         synchronized (delegate) {
@@ -333,23 +332,23 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public boolean contains(Object value) {
-        return delegate.contains(value);
-    }
-
-    @Override
-    public boolean containsValue(Object value) {
+    public synchronized boolean contains(Object value) {
         return delegate.containsValue(value);
     }
 
     @Override
-    public boolean containsKey(Object key) {
+    public synchronized boolean containsValue(Object value) {
+        return delegate.containsValue(value);
+    }
+
+    @Override
+    public synchronized boolean containsKey(Object key) {
         return getAndReportAccess(key) != null;
     }
 
     @Override
     @Nullable
-    public Object put(Object key, Object value) {
+    public synchronized Object put(Object key, Object value) {
         Object oldValue;
         synchronized (delegate) {
             oldValue = delegate.put(key, value);
@@ -362,13 +361,13 @@ public class AccessTrackingProperties extends Properties {
 
     @Override
     @Nullable
-    public Object setProperty(String key, String value) {
+    public synchronized Object setProperty(String key, String value) {
         return put(key, value);
     }
 
     @Override
     @Nullable
-    public Object remove(Object key) {
+    public synchronized Object remove(Object key) {
         Object result;
         synchronized (delegate) {
             result = delegate.remove(key);
@@ -380,7 +379,7 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public void putAll(Map<?, ?> t) {
+    public synchronized void putAll(Map<?, ?> t) {
         synchronized (delegate) {
             delegate.putAll(t);
         }
@@ -389,7 +388,7 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public void clear() {
+    public synchronized void clear() {
         synchronized (delegate) {
             delegate.clear();
         }
@@ -411,24 +410,24 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public Object getOrDefault(Object key, Object defaultValue) {
+    public synchronized Object getOrDefault(Object key, Object defaultValue) {
         Object value = getAndReportAccess(key);
         return value != null ? value : defaultValue;
     }
 
     @Override
     @Nullable
-    public Object get(Object key) {
+    public synchronized Object get(Object key) {
         return getAndReportAccess(key);
     }
 
     @Override
-    public void load(Reader reader) throws IOException {
+    public synchronized void load(Reader reader) throws IOException {
         delegate.load(reader);
     }
 
     @Override
-    public void load(InputStream inStream) throws IOException {
+    public synchronized void load(InputStream inStream) throws IOException {
         delegate.load(inStream);
     }
 
@@ -453,7 +452,7 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public void loadFromXML(InputStream in) throws IOException {
+    public synchronized void loadFromXML(InputStream in) throws IOException {
         delegate.loadFromXML(in);
     }
 
@@ -482,19 +481,19 @@ public class AccessTrackingProperties extends Properties {
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         return delegate.toString();
     }
 
     @Override
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    public boolean equals(Object o) {
+    public synchronized boolean equals(Object o) {
         reportAggregatingAccess();
         return delegate.equals(o);
     }
 
     @Override
-    public int hashCode() {
+    public synchronized int hashCode() {
         reportAggregatingAccess();
         return delegate.hashCode();
     }
