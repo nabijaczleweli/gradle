@@ -21,7 +21,6 @@ errorprone {
         "UnnecessaryParentheses", // 1 occurrences
         "UnnecessaryStringBuilder", // 1 occurrences
         "UnusedMethod", // 8 occurrences
-        "UnusedTypeParameter", // 1 occurrences
         "UnusedVariable", // 20 occurrences
     )
 }
