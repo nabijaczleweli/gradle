@@ -78,14 +78,14 @@ public abstract class TypeCompatibilityModelProjectionSupport<M> implements Mode
         if (valueDescription != null) {
             return valueDescription;
         }
-        return new StringBuilder(type.toString()).append("#toString() returned null").toString();
+        return type + "#toString() returned null";
     }
 
     public static String description(ModelType<?> type) {
         if (type.getRawClass().getSuperclass() == null && type.getRawClass().getInterfaces().length == 0) {
             return type.toString();
         }
-        return type.toString() + " (or assignment compatible type thereof)";
+        return type + " (or assignment compatible type thereof)";
     }
 
     @Override

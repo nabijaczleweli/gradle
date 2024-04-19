@@ -14,7 +14,6 @@ errorprone {
         "UndefinedEquals", // 2 occurrences
         "UnnecessaryLambda", // 1 occurrences
         "UnnecessaryParentheses", // 1 occurrences
-        "UnnecessaryStringBuilder", // 1 occurrences
         "UnusedMethod", // 8 occurrences
         "UnusedVariable", // 20 occurrences
     )
