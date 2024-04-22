@@ -33,7 +33,6 @@ import org.gradle.util.internal.IndexedSpec;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -87,10 +86,10 @@ public class DefaultProblemDiagnosticsFactory implements ProblemDiagnosticsFacto
 
     @Override
     public ProblemDiagnostics forException(Throwable exception) {
-        return locationFromStackTrace(exception, true, true);
+        return locationFromStackTrace(exception, true);
     }
 
-    private ProblemDiagnostics locationFromStackTrace(@Nullable Throwable throwable, boolean fromException, boolean keepException) {
+    private ProblemDiagnostics locationFromStackTrace(@Nullable Throwable throwable, boolean fromException) {
         UserCodeApplicationContext.Application applicationContext = userCodeContext.current();
 
         if (applicationContext == null && throwable == null) {
@@ -99,19 +98,20 @@ public class DefaultProblemDiagnosticsFactory implements ProblemDiagnosticsFacto
 
         UserCodeSource source = applicationContext != null ? applicationContext.getSource() : null;
         if (throwable == null) {
-            return new DefaultProblemDiagnostics(null, Collections.<StackTraceElement>emptyList(), null, source);
+            return new DefaultProblemDiagnostics(null, null, source);
         }
 
-        Failure failure = getFailure(throwable);
-        Location location = locationAnalyzer.locationForUsage(failure, fromException);
+        Failure stackTracing = getFailure(throwable);
+        Location location = locationAnalyzer.locationForUsage(stackTracing, fromException);
 
-        return new DefaultProblemDiagnostics(keepException ? failure : null, getMinimizedStackTrace(failure), location, source);
+        return new DefaultProblemDiagnostics(stackTracing, location, source);
     }
 
     /**
      * Returns a subsequence of the stacktrace that contains only user code
      * and one internal frame that occurs just before the deepest user code.
      */
+    @SuppressWarnings("unused")
     private static List<StackTraceElement> getMinimizedStackTrace(final Failure failure) {
         final int firstUserCodeIndex = failure.indexOfStackFrame(0, StackFramePredicate.USER_CODE);
 
@@ -141,20 +141,20 @@ public class DefaultProblemDiagnosticsFactory implements ProblemDiagnosticsFacto
         @Override
         public ProblemDiagnostics forCurrentCaller(@Nullable Throwable exception) {
             if (exception == null) {
-                return locationFromStackTrace(getImplicitThrowable(EXCEPTION_FACTORY), false, false);
+                return locationFromStackTrace(getImplicitThrowable(EXCEPTION_FACTORY), false);
             } else {
-                return locationFromStackTrace(exception, true, true);
+                return locationFromStackTrace(exception, true);
             }
         }
 
         @Override
         public ProblemDiagnostics forCurrentCaller() {
-            return locationFromStackTrace(getImplicitThrowable(EXCEPTION_FACTORY), false, false);
+            return locationFromStackTrace(getImplicitThrowable(EXCEPTION_FACTORY), false);
         }
 
         @Override
         public ProblemDiagnostics forCurrentCaller(Supplier<? extends Throwable> exceptionFactory) {
-            return locationFromStackTrace(getImplicitThrowable(exceptionFactory), false, true);
+            return locationFromStackTrace(getImplicitThrowable(exceptionFactory), false);
         }
 
         @Nullable
@@ -168,32 +168,24 @@ public class DefaultProblemDiagnosticsFactory implements ProblemDiagnosticsFacto
     }
 
     private static class DefaultProblemDiagnostics implements ProblemDiagnostics {
-        private final Failure failure;
-        private final List<StackTraceElement> stackTrace;
+        private final Failure stackTracing;
         private final Location location;
         private final UserCodeSource source;
 
         public DefaultProblemDiagnostics(
-            @Nullable Failure failure,
-            List<StackTraceElement> stackTrace,
+            @Nullable Failure stackTracing,
             @Nullable Location location,
             @Nullable UserCodeSource source
         ) {
-            this.failure = failure;
-            this.stackTrace = stackTrace;
+            this.stackTracing = stackTracing;
             this.location = location;
             this.source = source;
         }
 
         @Nullable
         @Override
-        public Failure getFailure() {
-            return failure;
-        }
-
-        @Override
-        public List<StackTraceElement> getMinimizedStackTrace() {
-            return stackTrace;
+        public Failure getStackTracing() {
+            return stackTracing;
         }
 
         @Nullable

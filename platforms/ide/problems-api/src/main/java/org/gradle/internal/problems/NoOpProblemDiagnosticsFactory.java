@@ -32,13 +32,8 @@ public class NoOpProblemDiagnosticsFactory implements ProblemDiagnosticsFactory 
     public static final ProblemDiagnostics EMPTY_DIAGNOSTICS = new ProblemDiagnostics() {
         @Nullable
         @Override
-        public Failure getFailure() {
+        public Failure getStackTracing() {
             return null;
-        }
-
-        @Override
-        public List<StackTraceElement> getMinimizedStackTrace() {
-            return Collections.emptyList();
         }
 
         @Nullable

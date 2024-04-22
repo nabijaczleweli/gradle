@@ -20,7 +20,6 @@ import org.gradle.internal.code.UserCodeSource;
 import org.gradle.internal.problems.failure.Failure;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * An immutable set of diagnostic information for a problem.
@@ -33,14 +32,7 @@ public interface ProblemDiagnostics {
      * The failure can be omitted due to limits or not be present in the first place.
      */
     @Nullable
-    Failure getFailure();
-
-    /**
-     * Returns a minimized stack trace that can be reported to the user about where the problem occurred.
-     *
-     * <p>Not every problem has a meaningful stack, even when the problem has an associated exception. Returns an empty list in this case.</p>
-     */
-    List<StackTraceElement> getMinimizedStackTrace();
+    Failure getStackTracing();
 
     /**
      * Returns the location of the problem, if known.

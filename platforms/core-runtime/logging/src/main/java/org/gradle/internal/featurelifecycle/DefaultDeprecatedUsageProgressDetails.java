@@ -21,6 +21,7 @@ import org.gradle.api.problems.internal.DocLink;
 import org.gradle.internal.SystemProperties;
 import org.gradle.internal.deprecation.DeprecatedFeatureUsage;
 import org.gradle.internal.operations.trace.CustomOperationTraceSerialization;
+import org.gradle.internal.problems.failure.Failure;
 import org.gradle.problems.ProblemDiagnostics;
 
 import java.util.Collections;
@@ -72,7 +73,9 @@ public class DefaultDeprecatedUsageProgressDetails implements DeprecatedUsagePro
 
     @Override
     public List<StackTraceElement> getStackTrace() {
-        return diagnostics.getMinimizedStackTrace();
+        // TODO: filtering
+        Failure failure = diagnostics.getStackTracing();
+        return failure == null ? Collections.<StackTraceElement>emptyList() : failure.getStackTrace();
     }
 
     @Override

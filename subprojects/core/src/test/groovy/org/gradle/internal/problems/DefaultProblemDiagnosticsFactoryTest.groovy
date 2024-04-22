@@ -40,7 +40,7 @@ class DefaultProblemDiagnosticsFactoryTest extends Specification {
         def diagnostics = stream.forCurrentCaller()
 
         then:
-        diagnostics.failure == null
+        diagnostics.stackTracing == null
         assertIsCallerStackTrace(diagnostics.minimizedStackTrace)
         diagnostics.location == location
 
@@ -63,8 +63,8 @@ class DefaultProblemDiagnosticsFactoryTest extends Specification {
         def diagnostics = stream.forCurrentCaller(supplier)
 
         then:
-        diagnostics.failure.header == exception.toString()
-        diagnostics.failure.stackTrace == exception.stackTrace.toList()
+        diagnostics.stackTracing.header == exception.toString()
+        diagnostics.stackTracing.stackTrace == exception.stackTrace.toList()
         diagnostics.location == location
 
         1 * locationAnalyzer.locationForUsage(_, false) >> { Failure failure, b ->
@@ -81,23 +81,23 @@ class DefaultProblemDiagnosticsFactoryTest extends Specification {
 
         expect:
         def diagnostics1 = stream.forCurrentCaller()
-        diagnostics1.failure == null
+        diagnostics1.stackTracing == null
         !diagnostics1.minimizedStackTrace.empty
 
         def diagnostics2 = stream.forCurrentCaller()
-        diagnostics2.failure == null
+        diagnostics2.stackTracing == null
         !diagnostics2.minimizedStackTrace.empty
 
         def diagnostics3 = stream.forCurrentCaller()
-        diagnostics3.failure == null
+        diagnostics3.stackTracing == null
         diagnostics3.minimizedStackTrace.empty
 
         def diagnostics4 = stream.forCurrentCaller()
-        diagnostics4.failure == null
+        diagnostics4.stackTracing == null
         diagnostics4.minimizedStackTrace.empty
 
         def diagnostics5 = stream.forCurrentCaller(supplier)
-        diagnostics5.failure == null
+        diagnostics5.stackTracing == null
         diagnostics5.minimizedStackTrace.empty
     }
 
@@ -129,14 +129,14 @@ class DefaultProblemDiagnosticsFactoryTest extends Specification {
 
         def failure1 = new Exception("broken")
         def diagnostics1 = stream.forCurrentCaller(failure1)
-        diagnostics1.failure.header == failure1.toString()
-        diagnostics1.failure.stackTrace == failure1.stackTrace.toList()
+        diagnostics1.stackTracing.header == failure1.toString()
+        diagnostics1.stackTracing.stackTrace == failure1.stackTrace.toList()
         !diagnostics1.minimizedStackTrace.empty
 
         def failure2 = new Exception("broken")
         def diagnostics2 = factory.forException(failure2)
-        diagnostics2.failure.header == failure2.toString()
-        diagnostics2.failure.stackTrace == failure2.stackTrace.toList()
+        diagnostics2.stackTracing.header == failure2.toString()
+        diagnostics2.stackTracing.stackTrace == failure2.stackTrace.toList()
         !diagnostics2.minimizedStackTrace.empty
     }
 

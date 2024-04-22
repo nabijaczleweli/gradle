@@ -122,8 +122,8 @@ class ConfigurationCacheProblems(
             }
 
             override fun onError(trace: PropertyTrace, error: Exception, message: StructuredMessageBuilder) {
-                val failure = failureFactory.create(error)
-                onProblem(PropertyProblem(trace, StructuredMessage.build(message), failure))
+                val stackTracing = failureFactory.create(error)
+                onProblem(PropertyProblem(trace, StructuredMessage.build(message), error, stackTracing))
             }
         }
     }

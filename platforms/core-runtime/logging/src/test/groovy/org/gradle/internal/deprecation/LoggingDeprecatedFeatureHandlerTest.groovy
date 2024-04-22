@@ -503,7 +503,7 @@ feature1 removal""")
 
     private void useStackTrace(List<StackTraceElement> stackTrace = []) {
         1 * problemStream.forCurrentCaller() >> Stub(ProblemDiagnostics) {
-            _ * getFailure() >> Stub(Failure) {
+            _ * getStackTracing() >> Stub(Failure) {
                 getStackTrace() >> stackTrace
             }
             _ * getMinimizedStackTrace() >> stackTrace
@@ -513,7 +513,7 @@ feature1 removal""")
 
     private void useLocation(String displayName, int lineNumber, List<StackTraceElement> stackTrace = []) {
         1 * problemStream.forCurrentCaller() >> Stub(ProblemDiagnostics) {
-            _ * getFailure() >> Stub(Failure) {
+            _ * getStackTracing() >> Stub(Failure) {
                 getStackTrace() >> stackTrace
             }
             _ * getMinimizedStackTrace() >> stackTrace
