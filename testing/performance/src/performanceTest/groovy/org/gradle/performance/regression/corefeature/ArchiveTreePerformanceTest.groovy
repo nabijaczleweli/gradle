@@ -26,11 +26,14 @@ import static org.gradle.performance.results.OperatingSystem.LINUX
 
 
 class ArchiveTreePerformanceTest extends AbstractCrossVersionPerformanceTest {
+    def memory = "1G"
+
     @RunFor(
         @Scenario(type = PER_COMMIT, operatingSystems = [LINUX], testProjects = ["archivePerformanceProject"])
     )
     def "visiting zip trees"() {
         given:
+        runner.gradleOpts = ["-Xms${memory}", "-Xmx${memory}"]
         runner.tasksToRun = ['visitZip']
 
         when:
@@ -45,6 +48,7 @@ class ArchiveTreePerformanceTest extends AbstractCrossVersionPerformanceTest {
     )
     def "visiting tar trees"() {
         given:
+        runner.gradleOpts = ["-Xms${memory}", "-Xmx${memory}"]
         runner.tasksToRun = ['visitTar']
 
         when:
@@ -59,6 +63,7 @@ class ArchiveTreePerformanceTest extends AbstractCrossVersionPerformanceTest {
     )
     def "visiting gzip tar trees"() {
         given:
+        runner.gradleOpts = ["-Xms${memory}", "-Xmx${memory}"]
         runner.tasksToRun = ['visitTarGz']
 
         when:
